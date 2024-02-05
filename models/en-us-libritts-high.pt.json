@@ -3,7 +3,7 @@
         "sample_rate": 22050
     },
     "espeak": {
-        "voice": "en-us"
+        "voice": "it"
     },
     "inference": {
         "noise_scale": 0.667,
