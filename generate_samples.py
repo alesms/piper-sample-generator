@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 import argparse
 import gc
 import itertools as it
@@ -14,23 +15,19 @@ import torch
 import torchaudio
 import webrtcvad
 from piper_phonemize import phonemize_espeak
-
-from piper_train.vits import commons
+from transformers import Wav2Vec2ForCTC  # Assumi che questa importazione corrisponda al modo in cui il tuo modello è definito e dove può essere trovato
 
 _DIR = Path(__file__).parent
 _LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-
 # Main generation function
 def generate_samples(
-    text: Union[List, str],
+    text: Union[List[str], str],
     output_dir: str,
     max_samples: int = None,
     file_names: List[str] = [],
-    model: str = os.path.join(
-        Path(__file__).parent, "models", "en_US-libritts_r-medium.pt"
-    ),
+    model_path: str = os.path.join(_DIR, "models", "your_model_name.pt"),  # Aggiorna con il nome del tuo file .pt
     batch_size: int = 1,
     slerp_weights: List[float] = [0.5],
     length_scales: List[float] = [0.75, 1, 1.25],
@@ -40,39 +37,21 @@ def generate_samples(
     verbose: bool = False,
     auto_reduce_batch_size: bool = False,
     **kwargs,
-) -> None:
+):
     """
     Generate synthetic speech clips, saving the clips to the specified output directory.
-
-    Args:
-        text (List[str]): The text to convert into speech. Can be either a
-                          a list of strings, or a path to a file with text on each line.
-        output_dir (str): The location to save the generated clips.
-        max_samples (int): The maximum number of samples to generate.
-        file_names (List[str]): The names to use when saving the files. Must be the same length
-                                as the `text` argument, if a list.
-        model (str): The path to the STT model to use for generation.
-        batch_size (int): The batch size to use when generated the clips
-        slerp_weights (List[float]): The weights to use when mixing speakers via SLERP.
-        length_scales (List[float]): Controls the average duration/speed of the generated speech.
-        noise_scales (List[float]): A parameter for overall variability of the generated speech.
-        noise_scale_ws (List[float]): A parameter for the stochastic duration of words/phonemes.
-        max_speakers (int): The maximum speaker number to use, if the model is multi-speaker.
-        verbose (bool): Enable or disable more detailed logging messages (default: False).
-        auto_reduce_batch_size (bool): Automatically and temporarily reduce the batch size
-                                       if CUDA OOM errors are detected, and try to resume generation.
-
-    Returns:
-        None
     """
+    # Caricamento del modello
+    model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h")  # Inizializza il modello con una configurazione preaddestrata
+    state_dict = torch.load(model_path)  # Carica lo state_dict
+    model.load_state_dict(state_dict)  # Applica lo state_dict al modello
+    model.eval()  # Imposta il modello in modalità valutazione
+    if torch.cuda.is_available():
+        model.cuda()
+        _LOGGER.debug("CUDA available, using GPU")
 
-    if max_samples is None:
-        max_samples = len(text)
+    # Continua con il resto del tuo codice...
 
-    _LOGGER.debug("Loading %s", model)
-    model_path = Path(model)
-    model = torch.load(model_path)
-    model.eval()
     _LOGGER.info("Successfully loaded the model")
 
     if torch.cuda.is_available():
