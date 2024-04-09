@@ -27,7 +27,7 @@ def generate_samples(
     output_dir: str,
     max_samples: int = None,
     file_names: List[str] = [],
-    model_path: str = os.path.join(_DIR, "models", "your_model_name.pt"),  # Aggiorna con il nome del tuo file .pt
+    model_path: str = os.path.join(_DIR, "models", "en_US-libritts_r-medium.pt"),  # Aggiorna con il nome del tuo file .pt
     batch_size: int = 1,
     slerp_weights: List[float] = [0.5],
     length_scales: List[float] = [0.75, 1, 1.25],
